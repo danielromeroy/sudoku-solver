@@ -26,6 +26,7 @@ def compute_possible_numbers(sudo_status):
                 nums_in_subsq = []
                 for k in range(1, 10):  # row
                     for l in range(1, 10):  # col
+                        # Check if current row and col are in the same subsquare
                         if ((i - 1) // 3) == ((k - 1) // 3) and \
                            ((j - 1) // 3) == ((l - 1) // 3) and \
                            sudo_status[k - 1][l - 1] != "X":
@@ -62,13 +63,4 @@ while not solved:
     if "X" not in list(itt.chain(*sudoku_solve_status)):
         solved = True
 
-sudoku_string = ""
-count = 0
-for num in list(itt.chain(*sudoku_solve_status)):
-    sudoku_string += f"{num} "
-    count += 1
-    if count == 9:
-        count = 0
-        sudoku_string += "\n"
 
-print(sudoku_string)
