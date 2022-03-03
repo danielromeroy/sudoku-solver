@@ -64,3 +64,13 @@ while not solved:
         solved = True
 
 
+sudoku_string = ""
+count = 0
+for num in list(itt.chain(*sudoku_solve_status)):
+    sudoku_string += f"{num} "
+    count += 1
+    if count == 9:
+        count = 0
+        sudoku_string += "\n"
+
+print(sudoku_string)
