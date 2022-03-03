@@ -1,8 +1,8 @@
 import itertools as itt
 import copy as c
 
-INPUT_FILE = "./data/wikipedia_sudoku_2"
-MAX_SUDOKUS = 500000
+INPUT_FILE = "data/sudoku_256_solutions"
+MAX_SUDOKUS = 1000000
 
 
 class SudokuSolver:
@@ -39,9 +39,7 @@ class SudokuSolver:
 
                     forbidden_nums = list(set(nums_in_row + nums_in_col + nums_in_subsq))
 
-                    cell_possible_nums = [str(m) for m in range(1, 10) if str(m) not in forbidden_nums]
-
-                    self.possible_nums[f"{i}{j}"] = cell_possible_nums
+                    self.possible_nums[f"{i}{j}"] = [str(m) for m in range(1, 10) if str(m) not in forbidden_nums]
 
     def has_unique_solutions(self):
         for item in self.possible_nums.items():
@@ -92,27 +90,39 @@ def all_solved():
     return True
 
 
+def remove_duplicates():
+    global solvers
+    for i in reversed(range(0, len(solvers))):
+        test_solver = solvers[i]
+        for j in reversed(range(0, i)):
+            if test_solver.solve_status == solvers[j].solve_status:
+                solvers.pop(i)
+                break
+
 
 with open(INPUT_FILE) as sudoku_file:
     init_sudoku_solve_status = [line.split() for line in sudoku_file]
 
 solvers = [SudokuSolver(init_sudoku_solve_status)]
 
+solvers[0].print_string("A")
+
 debug_count = 0
 while not all_solved():
     debug_count += 1
     print(f"{debug_count=} {len(solvers)=}")
+    if len(solvers) > MAX_SUDOKUS:
+        raise MemoryError("Amount of sudokus exceeded limit. Input sudoku is too vague.")
     for i in reversed(range(0, len(solvers))):
         solver = solvers[i]
         if not solver.solved:
-            # if len(solvers) > MAX_SUDOKUS:
-            #     raise MemoryError("Amount of sudokus exceeded limit.")
             solver.compute_possible_numbers()
             if solver.has_unique_solutions():
                 solver.assign_unique_values()
             else:
                 solvers.pop(i)
                 solvers.extend([SudokuSolver(status) for status in solver.explode()])
+    remove_duplicates()
 
 for i in range(len(solvers)):
     solvers[i].print_string(i + 1)
