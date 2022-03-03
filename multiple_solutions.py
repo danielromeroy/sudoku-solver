@@ -2,7 +2,7 @@ import itertools as itt
 import copy as c
 
 INPUT_FILE = "data/sudoku_256_solutions"
-MAX_SUDOKUS = 1000000
+MAX_SUDOKUS = 50000
 
 
 class SudokuSolver:
@@ -105,12 +105,10 @@ with open(INPUT_FILE) as sudoku_file:
 
 solvers = [SudokuSolver(init_sudoku_solve_status)]
 
-solvers[0].print_string("A")
-
-debug_count = 0
+# debug_count = 0
 while not all_solved():
-    debug_count += 1
-    print(f"{debug_count=} {len(solvers)=}")
+    # debug_count += 1
+    # print(f"{debug_count=} {len(solvers)=}")
     if len(solvers) > MAX_SUDOKUS:
         raise MemoryError("Amount of sudokus exceeded limit. Input sudoku is too vague.")
     for i in reversed(range(0, len(solvers))):
