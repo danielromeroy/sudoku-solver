@@ -9,6 +9,7 @@ class SudokuSolver:
     def __init__(self, init_status: list):
         self.solve_status = init_status
         self.possible_nums = {}
+        self.possible_nums_amount = {}
         self.solved = False
         self.last_updated = []
         self.intelligent_branching = False
@@ -25,40 +26,64 @@ class SudokuSolver:
         }
 
     def compute_all_possible_numbers(self):
+        print("Computing all solutions")
         self.possible_nums = {}
         for i in range(1, 10):  # row
             for j in range(1, 10):  # col
                 self.possible_nums[f"{i}{j}"] = []
         for i in range(1, 10):  # row
-            row = self.solve_status[i - 1]
             for j in range(1, 10):  # col
-                if self.solve_status[i - 1][j - 1] == "X":
-                    nums_in_row = list(set(row))
-                    nums_in_row.remove("X")
+                self.update_cell(i, j)
 
-                    col = [self.solve_status[r - 1][j - 1] for r in range(1, 10)]
-                    nums_in_col = list(set(col))
-                    nums_in_col.remove("X")
+    def compute_necessary_numbers(self):
+        print("Computing only the necessary solutions")
+        update_rows = []
+        update_cols = []
+        update_subsq = []
+        for cell in self.last_updated:
+            row = int(cell[0])
+            if row not in update_rows:
+                update_rows.append(row)
+            col = int(cell[1])
+            if col not in update_cols:
+                update_cols.append(col)
+            subsq = ((row - 1) // 3, (col - 1) // 3)
+            if subsq not in update_subsq:
+                update_subsq.append(subsq)
 
-                    nums_in_subsq = []
-                    for k in range(1, 10):  # row
-                        for l in range(1, 10):  # col
-                            # Check if current row and col are in the same subsquare
-                            if ((i - 1) // 3) == ((k - 1) // 3) and \
-                                    ((j - 1) // 3) == ((l - 1) // 3) and \
-                                    self.solve_status[k - 1][l - 1] != "X":
-                                nums_in_subsq.append(self.solve_status[k - 1][l - 1])
+        for i in range(1, 10):  # row]
+            for j in range(1, 10):  # col
+                if i in update_rows or \
+                   j in update_cols or \
+                   ((i - 1) // 3, (j - 1) // 3) in update_subsq:
+                    self.update_cell(i, j)
 
-                    forbidden_nums = list(set(nums_in_row + nums_in_col + nums_in_subsq))
+    def update_cell(self, row_n, col_n):
+        if self.solve_status[row_n - 1][col_n - 1] == "X":
+            row = self.solve_status[row_n - 1]
+            nums_in_row = list(set(row))
+            nums_in_row.remove("X")
 
-                    self.possible_nums[f"{i}{j}"] = [str(m) for m in range(1, 10) if str(m) not in forbidden_nums]
+            col = [self.solve_status[r - 1][col_n - 1] for r in range(1, 10)]
+            nums_in_col = list(set(col))
+            nums_in_col.remove("X")
 
-    def compute_neccesary_numbers(self):
-        pass  # TODO: take last updated cell and update row, column and subsquare
+            nums_in_subsq = []
+            for k in range(1, 10):  # row
+                for l in range(1, 10):  # col
+                    # Check if current row and col are in the same subsquare
+                    if ((row_n - 1) // 3) == ((k - 1) // 3) and \
+                            ((col_n - 1) // 3) == ((l - 1) // 3) and \
+                            self.solve_status[k - 1][l - 1] != "X":
+                        nums_in_subsq.append(self.solve_status[k - 1][l - 1])
+
+            forbidden_nums = list(set(nums_in_row + nums_in_col + nums_in_subsq))
+
+            self.possible_nums[f"{row_n}{col_n}"] = [str(m) for m in range(1, 10) if str(m) not in forbidden_nums]
 
     def compute_solutions(self):
         if len(self.last_updated) > 0:
-            self.compute_neccesary_numbers()
+            self.compute_necessary_numbers()
         else:
             self.compute_all_possible_numbers()
 
@@ -80,12 +105,24 @@ class SudokuSolver:
             self.solved = True
 
     def branch_solutions(self):
-        possible_solutions = []
+        branched_solutions = []
+        for i in range(1, 10):  # row
+            for j in range(1, 10):  # col
+                self.possible_nums_amount[f"{i}{j}"] = len(self.possible_nums[f"{i}{j}"])
+
+        least_solutions = tuple(set(self.possible_nums_amount.values()))[0]
+
+        update_cells = []
+        for i in range(1, 10):  # row
+            for j in range(1, 10):  # col
+                if self.possible_nums_amount[f"{i}{j}"] == least_solutions:
+                    update_cells.append(f"{i}{j}")
+
         if not self.intelligent_branching:
             pass  # TODO: choose random cell and assign it
         else:
             pass  # TODO: implement search for least ocurring num
-        return possible_solutions
+        return branched_solutions
 
     def least_vague_cells(self):
         pass  # TODO: find cells with the least amount of solutions
@@ -139,7 +176,7 @@ while not all_solved():
     for i in reversed(range(0, len(solvers))):
         solver = solvers[i]
         if not solver.solved:
-
+            solver.compute_solutions()
             if solver.has_unique_solutions():
                 solver.assign_unique_values()
             else:
