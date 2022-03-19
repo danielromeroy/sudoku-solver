@@ -1,7 +1,7 @@
 import itertools as itt
 import copy as c
 
-INPUT_FILE = "data/sudoku_256_solutions"
+INPUT_FILE = "data/wikipedia_sudoku"
 MAX_SUDOKUS = 50000
 
 
@@ -10,13 +10,25 @@ class SudokuSolver:
         self.solve_status = init_status
         self.possible_nums = {}
         self.solved = False
+        self.last_updated = []
+        self.intelligent_branching = False
+        self.digit_occurrences = {
+            1: 0,
+            2: 0,
+            3: 0,
+            4: 0,
+            5: 0,
+            6: 0,
+            7: 0,
+            8: 0,
+            9: 0,
+        }
 
-    def compute_possible_numbers(self):
+    def compute_all_possible_numbers(self):
         self.possible_nums = {}
-        for i in range(1, 10):
-            for j in range(1, 10):
+        for i in range(1, 10):  # row
+            for j in range(1, 10):  # col
                 self.possible_nums[f"{i}{j}"] = []
-
         for i in range(1, 10):  # row
             row = self.solve_status[i - 1]
             for j in range(1, 10):  # col
@@ -41,6 +53,15 @@ class SudokuSolver:
 
                     self.possible_nums[f"{i}{j}"] = [str(m) for m in range(1, 10) if str(m) not in forbidden_nums]
 
+    def compute_neccesary_numbers(self):
+        pass  # TODO: take last updated cell and update row, column and subsquare
+
+    def compute_solutions(self):
+        if len(self.last_updated) > 0:
+            self.compute_neccesary_numbers()
+        else:
+            self.compute_all_possible_numbers()
+
     def has_unique_solutions(self):
         for item in self.possible_nums.items():
             if len(item[1]) == 1:
@@ -48,24 +69,29 @@ class SudokuSolver:
         return False
 
     def assign_unique_values(self):
+        self.last_updated = []
         for i in range(1, 10):  # row
             for j in range(1, 10):  # col
                 if len(self.possible_nums[f"{i}{j}"]) == 1:
                     self.solve_status[i - 1][j - 1] = self.possible_nums[f"{i}{j}"][0]
+                    self.last_updated.append(f"{i}{j}")
 
         if "X" not in list(itt.chain(*self.solve_status)):
             self.solved = True
 
-    def explode(self):
+    def branch_solutions(self):
         possible_solutions = []
-        for i in range(1, 10):  # row
-            for j in range(1, 10):  # col
-                if self.solve_status[i - 1][j - 1] == "X":
-                    for num in self.possible_nums[f"{i}{j}"]:
-                        new_solution = c.deepcopy(self.solve_status)
-                        new_solution[i - 1][j - 1] = num
-                        possible_solutions.append(new_solution)
+        if not self.intelligent_branching:
+            pass  # TODO: choose random cell and assign it
+        else:
+            pass  # TODO: implement search for least ocurring num
         return possible_solutions
+
+    def least_vague_cells(self):
+        pass  # TODO: find cells with the least amount of solutions
+
+    def count_digits_in_possible_solutions(self):
+        pass  # TODO: count numbers and assign digit_occurrences
 
     def print_string(self, n):
         print(f"Solution number {n}:")
@@ -78,7 +104,6 @@ class SudokuSolver:
             if count == 9:
                 count = 0
                 sudoku_string += "\n"
-
         print(sudoku_string)
 
 
@@ -105,22 +130,25 @@ with open(INPUT_FILE) as sudoku_file:
 
 solvers = [SudokuSolver(init_sudoku_solve_status)]
 
-# debug_count = 0
+debug_count = 0
 while not all_solved():
-    # debug_count += 1
-    # print(f"{debug_count=} {len(solvers)=}")
+    debug_count += 1
+    print(f"{debug_count=} {len(solvers)=} (before operations)")
     if len(solvers) > MAX_SUDOKUS:
         raise MemoryError("Amount of sudokus exceeded limit. Input sudoku is too vague.")
     for i in reversed(range(0, len(solvers))):
         solver = solvers[i]
         if not solver.solved:
-            solver.compute_possible_numbers()
+
             if solver.has_unique_solutions():
                 solver.assign_unique_values()
             else:
                 solvers.pop(i)
-                solvers.extend([SudokuSolver(status) for status in solver.explode()])
+                solvers.extend([SudokuSolver(status) for status in solver.branch_solutions()])
+    print(f"{debug_count=} {len(solvers)=} (after operations)")
     remove_duplicates()
+
+print(f"{debug_count=} {len(solvers)=} (end of operations)")
 
 for i in range(len(solvers)):
     solvers[i].print_string(i + 1)
