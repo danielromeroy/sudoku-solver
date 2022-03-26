@@ -114,11 +114,9 @@ class SudokuSolver:
     def solution_to_string(self):
         return "\n".join([" ".join(row) for row in self.solve_status])
 
-    def solution_to_string_forwebsite(self):
+    def solution_to_string_long(self):
         string = self.solution_to_string()
-        string = string.replace(" ", "")
-        string = string.replace("X", ".")
-        string = string.replace("\n", "")
+        string = string.replace(" ", "").replace("X", ".").replace("\n", "")
         return string
 
 
@@ -134,8 +132,6 @@ def remove_duplicates():
     global sudokus
     for i in reversed(range(0, len(sudokus))):
         test_solver = sudokus[i]
-        # print(f"{sudokus=}")
-        # print(f"{test_solver=}")
         for j in reversed(range(0, i)):
             if test_solver.solve_status == sudokus[j].solve_status:
                 sudokus.pop(i)
@@ -166,8 +162,6 @@ if __name__ == '__main__':
         else:
             sudokus.insert(0, sudoku)
         remove_duplicates()
-
-    # print(f"{len(sudokus)=}")
 
     for i, sudoku in enumerate(sudokus):
         print(f"Solution n {i + 1}:")
