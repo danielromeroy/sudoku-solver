@@ -1,6 +1,6 @@
 import itertools as itt
 
-INPUT_FILE = "./data/wikipedia_sudoku"
+INPUT_FILE = "./data/hard_sudoku"
 
 with open(INPUT_FILE) as sudoku_file:
     sudoku_solve_status = [line.split() for line in sudoku_file]

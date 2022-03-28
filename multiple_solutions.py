@@ -104,7 +104,18 @@ class SudokuSolver:
         if not self.intelligent_branching:
             return rd.choice(candidate_cells)
         else:
-            pass  # TODO: find least ocurring values in candidate cells
+            all_digits = list(itt.chain(*self.possible_solutions.values()))
+            digit_ocurrences = {str(i): all_digits.count(str(i)) for i in range(1, 10)}
+            candidate_scores = {}
+            # Compute score for each candidate cell
+            for cell in candidate_cells:
+                score = 0
+                for value in self.possible_solutions[cell]:
+                    score += digit_ocurrences[value]
+                candidate_scores[cell] = score
+            optimal_cells = [cell for cell in candidate_cells
+                             if candidate_scores[cell] == min(candidate_scores.values())]
+            return rd.choice(optimal_cells)
 
     def get_subsq(self, cell):
         row = int(cell[0])
@@ -130,10 +141,10 @@ def all_solved():
 
 def remove_duplicates():
     global sudokus
+    # Probably very optimizeable
     for i in reversed(range(0, len(sudokus))):
-        test_solver = sudokus[i]
         for j in reversed(range(0, i)):
-            if test_solver.solve_status == sudokus[j].solve_status:
+            if sudokus[i].solve_status == sudokus[j].solve_status:
                 sudokus.pop(i)
                 break
 
@@ -143,9 +154,9 @@ if __name__ == '__main__':
         init_sudoku_solve_status = [line.split() for line in sudoku_file]
 
     sudokus = [SudokuSolver(init_sudoku_solve_status)]
-    # debug_count = 0
+    debug_count = 0
     while not all_solved():
-        # debug_count += 1
+        debug_count += 1
         # print(f"{debug_count=} {len(sudokus)=}")
         if len(sudokus) > MAX_SUDOKUS:
             raise MemoryError("Amount of sudokus exceeded limit. Input sudoku is too vague.")
@@ -166,3 +177,6 @@ if __name__ == '__main__':
     for i, sudoku in enumerate(sudokus):
         print(f"Solution n {i + 1}:")
         print(sudoku.solution_to_string(), "\n")
+        # print(sudoku.solution_to_string_long())
+
+    print(f"Total iterations: {debug_count}")
